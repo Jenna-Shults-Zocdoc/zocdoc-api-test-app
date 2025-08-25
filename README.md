@@ -1,46 +1,99 @@
-# Getting Started with Create React App
+# 🏥 Zocdoc API Test Application
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A modern, colorful React application for testing and demonstrating Zocdoc API integration capabilities.
 
-## Available Scripts
+## ✨ Features
 
-In the project directory, you can run:
+- **🔐 Authentication**: OAuth 2.0 Client Credentials Flow with Zocdoc API
+- **👥 Provider Directory**: Browse all providers in your network
+- **🔍 Availability-Aware Search**: Search providers with real-time availability
+- **📅 Appointment Booking**: Interactive booking experience with timeslot selection
+- **🎨 Modern UI**: Beautiful, responsive design with healthcare-themed colors
+- **🔄 Token Management**: Automatic token refresh and expiration handling
 
-### `npm start`
+## 🚀 Quick Start
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+### Option 1: Live Demo (Recommended)
+Visit the deployed application: **[Your Vercel URL]**
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+### Option 2: Local Development
+1. Clone this repository
+2. Install dependencies: `npm install`
+3. Start the backend proxy: `npm run server`
+4. Start the frontend: `npm start`
+5. Open http://localhost:3000
 
-### `npm test`
+## 🔧 Configuration
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Authentication
+- Use your Zocdoc sandbox credentials
+- Enable "Use Backend Proxy" for real API testing
+- Or use "Mock Authentication" for demo purposes
 
-### `npm run build`
+### Backend Proxy
+The app includes a Node.js proxy server to handle CORS and API requests:
+- Runs on port 3001
+- Proxies requests to Zocdoc API
+- Handles authentication and token management
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## 📱 Application Flow
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+1. **Authentication** → Enter credentials or use mock auth
+2. **Provider Search** → Search by location, specialty, insurance
+3. **Availability Check** → View real-time appointment slots
+4. **Booking Experience** → Interactive appointment booking flow
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## 🎨 Design Features
 
-### `npm run eject`
+- **Healthcare-themed color palette**
+- **Gradient backgrounds and modern UI**
+- **Responsive design for all devices**
+- **Interactive animations and hover effects**
+- **Professional shadows and depth**
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+## 🔍 Key Components
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+- **AuthForm**: OAuth 2.0 authentication interface
+- **ProviderSearch**: Advanced search with availability filtering
+- **ProviderList**: Complete provider directory view
+- **BookingModal**: Interactive appointment booking
+- **TokenExpirationModal**: Seamless re-authentication
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+## 🛠 Technical Stack
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+- **Frontend**: React 18, TypeScript, Vite
+- **Backend**: Node.js, Express, Axios
+- **Styling**: CSS-in-JS with gradients and animations
+- **Deployment**: Vercel (recommended)
 
-## Learn More
+## 📊 API Endpoints Used
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+- `/v1/reference/npi` - Get provider NPIs
+- `/v1/providers` - Get provider details
+- `/v1/provider_locations` - Search provider locations
+- `/v1/provider_locations/availability` - Get appointment availability
+- `/v1/insurance_plans` - Get insurance plans
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## 🔐 Security Features
+
+- **Token expiration handling**
+- **Automatic re-authentication**
+- **Credential storage in localStorage**
+- **CORS proxy for secure API calls**
+
+## 📈 Business Value
+
+This application demonstrates:
+- **Real-time provider availability**
+- **Insurance plan integration**
+- **Modern booking experience**
+- **Professional healthcare UI/UX**
+- **Scalable API integration patterns**
+
+## 🤝 Support
+
+For technical questions or issues, contact the development team.
+
+---
+
+**Built with ❤️ for Zocdoc API integration**
