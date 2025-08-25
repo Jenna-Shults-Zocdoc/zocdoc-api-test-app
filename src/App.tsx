@@ -4,12 +4,13 @@ import AuthForm from './components/AuthForm';
 import AuthSuccess from './components/AuthSuccess';
 import ProviderList from './components/ProviderList';
 import ProviderSearch from './components/ProviderSearch';
+import AppointmentManager from './components/AppointmentManager';
 import TokenExpirationModal from './components/TokenExpirationModal';
 import DebugInfo from './components/DebugInfo';
 import PostmanComparison from './components/PostmanComparison';
 import { AuthResponse, apiService, setTokenExpiredCallback } from './services/api';
 
-type AppView = 'auth' | 'success' | 'providers' | 'search';
+type AppView = 'auth' | 'success' | 'providers' | 'search' | 'appointments';
 
 function App() {
   const [authResponse, setAuthResponse] = useState<AuthResponse | null>(null);
@@ -71,6 +72,10 @@ function App() {
     setCurrentView('search');
   };
 
+  const handleViewAppointments = () => {
+    setCurrentView('appointments');
+  };
+
   const handleBackToAuth = () => {
     setCurrentView('success');
   };
@@ -114,12 +119,15 @@ function App() {
             onLogout={handleLogout}
             onViewProviders={handleViewProviders}
             onViewSearch={handleViewSearch}
+            onViewAppointments={handleViewAppointments}
           />
         );
       case 'providers':
         return <ProviderList onBack={handleBackToAuth} />;
       case 'search':
         return <ProviderSearch onBack={handleBackToAuth} />;
+      case 'appointments':
+        return <AppointmentManager onBack={handleBackToAuth} />;
       default:
         return <AuthForm onAuthSuccess={handleAuthSuccess} storedCredentials={storedCredentials} />;
     }
@@ -183,6 +191,20 @@ function App() {
                     backdropFilter: 'blur(10px)'
                   }}>
                     🔍 Provider Search
+                  </span>
+                )}
+                {currentView === 'appointments' && (
+                  <span style={{
+                    marginLeft: '1rem',
+                    padding: '0.25rem 0.75rem',
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                    color: 'white',
+                    borderRadius: '9999px',
+                    fontSize: '0.875rem',
+                    fontWeight: '500',
+                    backdropFilter: 'blur(10px)'
+                  }}>
+                    📅 Appointment Manager
                   </span>
                 )}
               </div>

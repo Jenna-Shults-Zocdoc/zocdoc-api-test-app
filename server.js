@@ -370,6 +370,120 @@ app.get('/api/insurance_plans', async (req, res) => {
   }
 });
 
+// Proxy endpoint for booking appointments
+app.post('/api/appointments', async (req, res) => {
+  try {
+    if (!currentAccessToken) {
+      return res.status(401).json({ error: 'No access token available. Please authenticate first.' });
+    }
+
+    const bookingRequest = req.body;
+    console.log('Booking appointment through Zocdoc API...');
+    
+    const response = await axios.post('https://api-developer-sandbox.zocdoc.com/v1/appointments', bookingRequest, {
+      headers: { 
+        'Authorization': `Bearer ${currentAccessToken}`,
+        'Content-Type': 'application/json'
+      },
+      timeout: 15000
+    });
+    
+    console.log('Appointment booked successfully:', response.data.data.appointment_id);
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error booking appointment:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      error: 'Failed to book appointment',
+      details: error.response?.data || error.message
+    });
+  }
+});
+
+// Proxy endpoint for getting appointments
+app.get('/api/appointments', async (req, res) => {
+  try {
+    if (!currentAccessToken) {
+      return res.status(401).json({ error: 'No access token available. Please authenticate first.' });
+    }
+
+    const { page = 0, page_size = 10 } = req.query;
+    console.log('Fetching appointments from Zocdoc API...');
+    
+    const response = await axios.get('https://api-developer-sandbox.zocdoc.com/v1/appointments', {
+      headers: { 'Authorization': `Bearer ${currentAccessToken}` },
+      params: { page, page_size },
+      timeout: 10000
+    });
+    
+    console.log(`Successfully fetched ${response.data.data.length} appointments`);
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error fetching appointments:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      error: 'Failed to fetch appointments',
+      details: error.response?.data || error.message
+    });
+  }
+});
+
+// Proxy endpoint for cancelling appointments
+app.post('/api/appointments/cancel', async (req, res) => {
+  try {
+    if (!currentAccessToken) {
+      return res.status(401).json({ error: 'No access token available. Please authenticate first.' });
+    }
+
+    const cancelRequest = req.body;
+    console.log('Cancelling appointment through Zocdoc API...');
+    
+    const response = await axios.post('https://api-developer-sandbox.zocdoc.com/v1/appointments/cancel', cancelRequest, {
+      headers: { 
+        'Authorization': `Bearer ${currentAccessToken}`,
+        'Content-Type': 'application/json'
+      },
+      timeout: 10000
+    });
+    
+    console.log('Appointment cancelled successfully');
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error cancelling appointment:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      error: 'Failed to cancel appointment',
+      details: error.response?.data || error.message
+    });
+  }
+});
+
+// Proxy endpoint for rescheduling appointments
+app.post('/api/appointments/reschedule', async (req, res) => {
+  try {
+    if (!currentAccessToken) {
+      return res.status(401).json({ error: 'No access token available. Please authenticate first.' });
+    }
+
+    const rescheduleRequest = req.body;
+    console.log('Rescheduling appointment through Zocdoc API...');
+    
+    const response = await axios.post('https://api-developer-sandbox.zocdoc.com/v1/appointments/reschedule', rescheduleRequest, {
+      headers: { 
+        'Authorization': `Bearer ${currentAccessToken}`,
+        'Content-Type': 'application/json'
+      },
+      timeout: 10000
+    });
+    
+    console.log('Appointment rescheduled successfully');
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error rescheduling appointment:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      error: 'Failed to reschedule appointment',
+      details: error.response?.data || error.message
+    });
+  }
+});
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ 

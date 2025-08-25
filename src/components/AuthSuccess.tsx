@@ -6,9 +6,10 @@ interface AuthSuccessProps {
   onLogout: () => void;
   onViewProviders: () => void;
   onViewSearch: () => void;
+  onViewAppointments: () => void;
 }
 
-const AuthSuccess: React.FC<AuthSuccessProps> = ({ authResponse, onLogout, onViewProviders, onViewSearch }) => {
+const AuthSuccess: React.FC<AuthSuccessProps> = ({ authResponse, onLogout, onViewProviders, onViewSearch, onViewAppointments }) => {
   return (
     <div style={{
       maxWidth: '600px',
@@ -144,6 +145,31 @@ const AuthSuccess: React.FC<AuthSuccessProps> = ({ authResponse, onLogout, onVie
           }}
         >
           📋 View Provider Directory
+        </button>
+        <button
+          onClick={onViewAppointments}
+          style={{
+            padding: '0.875rem 1.5rem',
+            background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '0.75rem',
+            cursor: 'pointer',
+            fontSize: '1rem',
+            fontWeight: '600',
+            transition: 'all 0.3s ease',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
+          }}
+        >
+          📅 View Appointments
         </button>
         <button
           onClick={onLogout}

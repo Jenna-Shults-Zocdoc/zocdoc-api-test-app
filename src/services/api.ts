@@ -228,6 +228,115 @@ export interface AvailabilityAwareProvider {
   availability: Availability | null;
 }
 
+export interface AppointmentBookingRequest {
+  appointment_type: 'providers';
+  data: {
+    start_time: string;
+    visit_reason_id: string;
+    provider_location_id: string;
+    patient: {
+      first_name: string;
+      last_name: string;
+      date_of_birth: string;
+      sex_at_birth: 'male' | 'female';
+      phone_number: string;
+      email_address: string;
+      patient_address: {
+        address1: string;
+        city: string;
+        state: string;
+        zip_code: string;
+        address2?: string;
+      };
+      insurance?: {
+        insurance_plan_id?: string;
+        insurance_group_number?: string;
+        insurance_member_id?: string;
+        is_self_pay?: boolean;
+      };
+      gender?: string[];
+    };
+    patient_type: 'new' | 'existing';
+    notes?: string;
+  };
+}
+
+export interface AppointmentResponse {
+  request_id: string;
+  data: {
+    appointment_id: string;
+    appointment_status: string;
+    developer_patient_id?: string;
+    visit_type?: string;
+    notes?: string;
+  };
+}
+
+export interface AppointmentListResponse {
+  request_id: string;
+  page: number;
+  page_size: number;
+  total_count: number;
+  next_url?: string;
+  data: AppointmentListItem[];
+}
+
+export interface AppointmentListItem {
+  appointment_id: string;
+  appointment_status: string;
+  start_time: string;
+  created_time_utc: string;
+  last_modified_time_utc: string;
+  provider_location_id: string;
+  practice_id: string;
+  visit_reason_id: string;
+  visit_type: string;
+  patient_type: string;
+  notes?: string;
+  cancellation_reason?: string;
+  cancellation_reason_type?: string;
+  is_provider_resource: boolean;
+  confirmation_type: string;
+  location_phone_number?: string;
+  location_phone_extension?: string;
+  waiting_room_path?: string;
+  patient: {
+    patient_id: string;
+    developer_patient_id?: string;
+    first_name: string;
+    last_name: string;
+    date_of_birth: string;
+    sex_at_birth: string;
+    phone_number: string;
+    email_address: string;
+    patient_address: {
+      address1: string;
+      city: string;
+      state: string;
+      zip_code: string;
+      address2?: string;
+    };
+    insurance?: {
+      insurance_plan_id?: string;
+      insurance_group_number?: string;
+      insurance_member_id?: string;
+      is_self_pay?: boolean;
+    };
+    gender?: string[];
+  };
+}
+
+export interface CancelAppointmentRequest {
+  appointment_id: string;
+  cancellation_reason?: string;
+  cancellation_reason_type?: string;
+}
+
+export interface RescheduleAppointmentRequest {
+  appointment_id: string;
+  start_time: string;
+}
+
 class ApiService {
   private accessToken: string | null = null;
   private tokenExpiry: number | null = null;
@@ -586,6 +695,66 @@ class ApiService {
     } catch (error: any) {
       console.error('Error fetching all providers:', error);
       throw new Error(error.message || 'Failed to fetch all providers');
+    }
+  }
+
+  async bookAppointment(bookingRequest: AppointmentBookingRequest): Promise<AppointmentResponse> {
+    try {
+      console.log('Booking appointment...');
+      const response = await axios.post(`${BACKEND_PROXY_BASE}/appointments`, bookingRequest, {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 15000
+      });
+      console.log('Appointment booked successfully:', (response.data as any).data.appointment_id);
+      return response.data as AppointmentResponse;
+    } catch (error: any) {
+      console.error('Error booking appointment:', error);
+      throw new Error(`Failed to book appointment: ${error.response?.data?.errors?.[0]?.message || error.message}`);
+    }
+  }
+
+  async getAppointments(page: number = 0, pageSize: number = 10): Promise<AppointmentListResponse> {
+    try {
+      console.log('Fetching appointments...');
+      const response = await axios.get(`${BACKEND_PROXY_BASE}/appointments`, {
+        params: { page, page_size: pageSize },
+        timeout: 10000
+      });
+      console.log(`Successfully fetched ${(response.data as any).data.length} appointments`);
+      return response.data as AppointmentListResponse;
+    } catch (error: any) {
+      console.error('Error fetching appointments:', error);
+      throw new Error(`Failed to fetch appointments: ${error.response?.data?.errors?.[0]?.message || error.message}`);
+    }
+  }
+
+  async cancelAppointment(cancelRequest: CancelAppointmentRequest): Promise<AppointmentResponse> {
+    try {
+      console.log('Cancelling appointment...');
+      const response = await axios.post(`${BACKEND_PROXY_BASE}/appointments/cancel`, cancelRequest, {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 10000
+      });
+      console.log('Appointment cancelled successfully');
+      return response.data as AppointmentResponse;
+    } catch (error: any) {
+      console.error('Error cancelling appointment:', error);
+      throw new Error(`Failed to cancel appointment: ${error.response?.data?.errors?.[0]?.message || error.message}`);
+    }
+  }
+
+  async rescheduleAppointment(rescheduleRequest: RescheduleAppointmentRequest): Promise<AppointmentResponse> {
+    try {
+      console.log('Rescheduling appointment...');
+      const response = await axios.post(`${BACKEND_PROXY_BASE}/appointments/reschedule`, rescheduleRequest, {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 10000
+      });
+      console.log('Appointment rescheduled successfully');
+      return response.data as AppointmentResponse;
+    } catch (error: any) {
+      console.error('Error rescheduling appointment:', error);
+      throw new Error(`Failed to reschedule appointment: ${error.response?.data?.errors?.[0]?.message || error.message}`);
     }
   }
 

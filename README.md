@@ -8,6 +8,7 @@ A modern, colorful React application for testing and demonstrating Zocdoc API in
 - **👥 Provider Directory**: Browse all providers in your network
 - **🔍 Availability-Aware Search**: Search providers with real-time availability
 - **📅 Appointment Booking**: Interactive booking experience with timeslot selection
+- **📋 Appointment Management**: View, cancel, and reschedule appointments
 - **🎨 Modern UI**: Beautiful, responsive design with healthcare-themed colors
 - **🔄 Token Management**: Automatic token refresh and expiration handling
 
@@ -73,6 +74,10 @@ The app includes a Node.js proxy server to handle CORS and API requests:
 - `/v1/provider_locations` - Search provider locations
 - `/v1/provider_locations/availability` - Get appointment availability
 - `/v1/insurance_plans` - Get insurance plans
+- `/v1/appointments` - Book new appointments
+- `/v1/appointments` (GET) - List existing appointments
+- `/v1/appointments/cancel` - Cancel appointments
+- `/v1/appointments/reschedule` - Reschedule appointments
 
 ## 🔐 Security Features
 
