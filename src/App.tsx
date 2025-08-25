@@ -5,12 +5,13 @@ import AuthSuccess from './components/AuthSuccess';
 import ProviderList from './components/ProviderList';
 import ProviderSearch from './components/ProviderSearch';
 import AppointmentManager from './components/AppointmentManager';
+import WebhookSimulator from './components/WebhookSimulator';
 import TokenExpirationModal from './components/TokenExpirationModal';
 import DebugInfo from './components/DebugInfo';
 import PostmanComparison from './components/PostmanComparison';
 import { AuthResponse, apiService, setTokenExpiredCallback } from './services/api';
 
-type AppView = 'auth' | 'success' | 'providers' | 'search' | 'appointments';
+type AppView = 'auth' | 'success' | 'providers' | 'search' | 'appointments' | 'webhook-simulator';
 
 function App() {
   const [authResponse, setAuthResponse] = useState<AuthResponse | null>(null);
@@ -76,6 +77,10 @@ function App() {
     setCurrentView('appointments');
   };
 
+  const handleViewWebhookSimulator = () => {
+    setCurrentView('webhook-simulator');
+  };
+
   const handleBackToAuth = () => {
     setCurrentView('success');
   };
@@ -120,6 +125,7 @@ function App() {
             onViewProviders={handleViewProviders}
             onViewSearch={handleViewSearch}
             onViewAppointments={handleViewAppointments}
+            onViewWebhookSimulator={handleViewWebhookSimulator}
           />
         );
       case 'providers':
@@ -128,6 +134,8 @@ function App() {
         return <ProviderSearch onBack={handleBackToAuth} />;
       case 'appointments':
         return <AppointmentManager onBack={handleBackToAuth} />;
+      case 'webhook-simulator':
+        return <WebhookSimulator onBack={handleBackToAuth} />;
       default:
         return <AuthForm onAuthSuccess={handleAuthSuccess} storedCredentials={storedCredentials} />;
     }
@@ -205,6 +213,20 @@ function App() {
                     backdropFilter: 'blur(10px)'
                   }}>
                     📅 Appointment Manager
+                  </span>
+                )}
+                {currentView === 'webhook-simulator' && (
+                  <span style={{
+                    marginLeft: '1rem',
+                    padding: '0.25rem 0.75rem',
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                    color: 'white',
+                    borderRadius: '9999px',
+                    fontSize: '0.875rem',
+                    fontWeight: '500',
+                    backdropFilter: 'blur(10px)'
+                  }}>
+                    🔗 Webhook Simulator
                   </span>
                 )}
               </div>

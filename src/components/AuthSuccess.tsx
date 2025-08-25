@@ -7,9 +7,10 @@ interface AuthSuccessProps {
   onViewProviders: () => void;
   onViewSearch: () => void;
   onViewAppointments: () => void;
+  onViewWebhookSimulator: () => void;
 }
 
-const AuthSuccess: React.FC<AuthSuccessProps> = ({ authResponse, onLogout, onViewProviders, onViewSearch, onViewAppointments }) => {
+const AuthSuccess: React.FC<AuthSuccessProps> = ({ authResponse, onLogout, onViewProviders, onViewSearch, onViewAppointments, onViewWebhookSimulator }) => {
   return (
     <div style={{
       maxWidth: '600px',
@@ -170,6 +171,31 @@ const AuthSuccess: React.FC<AuthSuccessProps> = ({ authResponse, onLogout, onVie
           }}
         >
           📅 View Appointments
+        </button>
+        <button
+          onClick={onViewWebhookSimulator}
+          style={{
+            padding: '0.875rem 1.5rem',
+            background: 'linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '0.75rem',
+            cursor: 'pointer',
+            fontSize: '1rem',
+            fontWeight: '600',
+            transition: 'all 0.3s ease',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
+          }}
+        >
+          🔌 Webhook Simulator
         </button>
         <button
           onClick={onLogout}

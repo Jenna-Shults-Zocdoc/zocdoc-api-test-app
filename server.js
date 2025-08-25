@@ -3,7 +3,6 @@ const cors = require('cors');
 const axios = require('axios');
 
 const app = express();
-const PORT = 3001;
 
 // Enable CORS for React app
 app.use(cors({
@@ -510,6 +509,32 @@ app.post('/api/appointments/reschedule', async (req, res) => {
   }
 });
 
+// Proxy endpoint for simulating webhook events
+app.post('/api/webhook/mock-request', async (req, res) => {
+  try {
+    if (!currentAccessToken) {
+      return res.status(401).json({ error: 'No access token available. Please authenticate first.' });
+    }
+    const webhookRequest = req.body;
+    console.log('Simulating webhook through Zocdoc API...');
+    const response = await axios.post('https://api-developer-sandbox.zocdoc.com/v1/webhook/mock-request', webhookRequest, {
+      headers: {
+        'Authorization': `Bearer ${currentAccessToken}`,
+        'Content-Type': 'application/json'
+      },
+      timeout: 10000
+    });
+    console.log('Webhook simulation successful');
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error simulating webhook:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      error: 'Failed to simulate webhook',
+      details: error.response?.data || error.message
+    });
+  }
+});
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ 
@@ -519,6 +544,7 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`🚀 Backend proxy server running on http://localhost:${PORT}`);
   console.log(`📡 Ready to proxy requests to Zocdoc API`);

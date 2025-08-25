@@ -337,6 +337,29 @@ export interface RescheduleAppointmentRequest {
   start_time: string;
 }
 
+export interface WebhookMockRequest {
+  webhook_url: string;
+  webhook_key: string;
+  appointment_update_type?: 'updated' | 'cancelled' | 'created' | 'arrived' | 'no_show';
+}
+
+export interface WebhookMockResponse {
+  event_type: string;
+  webhook_timestamp: string;
+  data: {
+    data_type: string;
+    appointment_data: {
+      appointment_id: string;
+      appointment_updated_timestamp: string;
+      appointment_update_type: string;
+      changed_attributes?: Array<{
+        attribute_path: string;
+        attachment_type?: string;
+      }>;
+    };
+  };
+}
+
 class ApiService {
   private accessToken: string | null = null;
   private tokenExpiry: number | null = null;
@@ -769,6 +792,21 @@ class ApiService {
     } catch (error: any) {
       console.error('Error rescheduling appointment:', error);
       throw new Error(`Failed to reschedule appointment: ${error.response?.data?.errors?.[0]?.message || error.message}`);
+    }
+  }
+
+  async simulateWebhook(webhookRequest: WebhookMockRequest): Promise<WebhookMockResponse> {
+    try {
+      console.log('Simulating webhook event...');
+      const response = await axios.post(`${BACKEND_PROXY_BASE}/webhook/mock-request`, webhookRequest, {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 10000
+      });
+      console.log('Webhook simulation successful');
+      return response.data as WebhookMockResponse;
+    } catch (error: any) {
+      console.error('Error simulating webhook:', error);
+      throw new Error(`Failed to simulate webhook: ${error.response?.data?.errors?.[0]?.message || error.message}`);
     }
   }
 
