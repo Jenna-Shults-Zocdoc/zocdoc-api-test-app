@@ -14,6 +14,7 @@ const AppointmentManager: React.FC<AppointmentManagerProps> = ({ onBack }) => {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentListItem | null>(null);
+  const [isLoadingTestAppointment, setIsLoadingTestAppointment] = useState(false);
 
   useEffect(() => {
     loadAppointments();
@@ -42,22 +43,34 @@ const AppointmentManager: React.FC<AppointmentManagerProps> = ({ onBack }) => {
   };
 
   const loadTestAppointment = async () => {
+    console.log('Loading test appointment...');
+    setIsLoadingTestAppointment(true);
+    setError('');
     try {
       // Load the known test appointment from sandbox
       const testAppointmentId = '2b29f79b-6d7f-472a-9603-d0c378bc9531';
+      console.log('Fetching appointment with ID:', testAppointmentId);
+      
       const testAppointment = await apiService.getAppointmentById(testAppointmentId);
+      console.log('Test appointment loaded successfully:', testAppointment);
       
       // Add it to the appointments list if it's not already there
       setAppointments(prev => {
         const exists = prev.some(apt => apt.appointment_id === testAppointment.appointment_id);
         if (!exists) {
+          console.log('Adding test appointment to list');
           return [testAppointment, ...prev];
+        } else {
+          console.log('Test appointment already exists in list');
+          return prev;
         }
-        return prev;
       });
     } catch (err) {
-      console.log('Could not load test appointment:', err);
+      console.error('Error loading test appointment:', err);
+      setError(`Failed to load test appointment: ${err instanceof Error ? err.message : 'Unknown error'}`);
       // This is okay - the test appointment might not be available
+    } finally {
+      setIsLoadingTestAppointment(false);
     }
   };
 
@@ -220,20 +233,24 @@ const AppointmentManager: React.FC<AppointmentManagerProps> = ({ onBack }) => {
               </button>
               <button
                 onClick={loadTestAppointment}
+                disabled={isLoadingTestAppointment}
                 style={{
                   padding: '1rem 2rem',
-                  background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                  background: isLoadingTestAppointment 
+                    ? 'linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)'
+                    : 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '0.75rem',
-                  cursor: 'pointer',
+                  cursor: isLoadingTestAppointment ? 'not-allowed' : 'pointer',
                   fontSize: '1.125rem',
                   fontWeight: '600',
                   transition: 'all 0.3s ease',
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                  opacity: isLoadingTestAppointment ? 0.7 : 1
                 }}
               >
-                🧪 Load Test Appointment
+                {isLoadingTestAppointment ? '🔄 Loading...' : '🧪 Load Test Appointment'}
               </button>
             </div>
           </div>
