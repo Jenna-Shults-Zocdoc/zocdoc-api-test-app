@@ -35,7 +35,7 @@ app.post('/api/auth', async (req, res) => {
       grant_type: 'client_credentials',
       client_id: clientId,
       client_secret: clientSecret,
-      scope: 'external.appointment.read',
+              scope: 'external.appointment.read external.appointment.write',
       audience: 'https://api-developer-sandbox.zocdoc.com/'
     }, {
       headers: {

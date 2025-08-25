@@ -766,7 +766,7 @@ class ApiService {
         grant_type: 'client_credentials',
         client_id: clientId,
         client_secret: '***hidden***',
-        scope: 'external.appointment.read',
+        scope: 'external.appointment.read external.appointment.write',
         audience: 'https://api-developer-sandbox.zocdoc.com/'
       });
 
@@ -780,7 +780,7 @@ class ApiService {
         const basicAuth = btoa(`${clientId}:${clientSecret}`);
         response = await axios.post<AuthResponse>(AUTH_URL, {
           grant_type: 'client_credentials',
-          scope: 'external.appointment.read',
+          scope: 'external.appointment.read external.appointment.write',
           audience: 'https://api-developer-sandbox.zocdoc.com/'
         }, {
           headers: {
@@ -800,7 +800,7 @@ class ApiService {
             grant_type: 'client_credentials',
             client_id: clientId,
             client_secret: clientSecret,
-            scope: 'external.appointment.read',
+            scope: 'external.appointment.read external.appointment.write',
             audience: 'https://api-developer-sandbox.zocdoc.com/'
           }, {
             headers: {
@@ -818,7 +818,7 @@ class ApiService {
           const basicAuth = btoa(`${clientId}:${clientSecret}`);
           response = await axios.post<AuthResponse>(`${CORS_PROXY}${AUTH_URL}`, {
             grant_type: 'client_credentials',
-            scope: 'external.appointment.read',
+            scope: 'external.appointment.read external.appointment.write',
             audience: 'https://api-developer-sandbox.zocdoc.com/'
           }, {
             headers: {

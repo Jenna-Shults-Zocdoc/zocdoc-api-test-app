@@ -54,7 +54,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess, storedCredentials })
       access_token: 'mock_token_12345',
       token_type: 'Bearer',
       expires_in: 3600,
-      scope: 'external.appointment.read'
+              scope: 'external.appointment.read external.appointment.write'
     };
     onAuthSuccess(mockResponse);
   };

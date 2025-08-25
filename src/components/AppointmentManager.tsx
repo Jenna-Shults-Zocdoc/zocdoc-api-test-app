@@ -26,7 +26,14 @@ const AppointmentManager: React.FC<AppointmentManagerProps> = ({ onBack }) => {
       const response = await apiService.getAppointments(currentPage, 10);
       setAppointments(response.data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load appointments');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load appointments';
+      if (errorMessage.includes('404')) {
+        // No appointments found yet - this is normal for new users
+        setAppointments([]);
+        setError('');
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }
