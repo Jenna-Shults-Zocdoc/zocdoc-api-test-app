@@ -27,6 +27,8 @@ const AppointmentManager: React.FC<AppointmentManagerProps> = ({ onBack }) => {
     setError('');
     try {
       const response = await apiService.getAppointments(currentPage, 10);
+      console.log('Appointments response:', response);
+      console.log('Appointments data:', response.data);
       setAppointments(response.data);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load appointments';
@@ -53,6 +55,7 @@ const AppointmentManager: React.FC<AppointmentManagerProps> = ({ onBack }) => {
       
       const testAppointment = await apiService.getAppointmentById(testAppointmentId);
       console.log('Test appointment loaded successfully:', testAppointment);
+      console.log('Test appointment structure:', JSON.stringify(testAppointment, null, 2));
       
       // Add it to the appointments list if it's not already there
       setAppointments(prev => {
@@ -256,7 +259,9 @@ const AppointmentManager: React.FC<AppointmentManagerProps> = ({ onBack }) => {
           </div>
         ) : (
           <div style={{ display: 'grid', gap: '1rem' }}>
-            {appointments.map((appointment) => (
+            {appointments
+              .filter(appointment => appointment && appointment.appointment_id) // Filter out invalid appointments
+              .map((appointment) => (
               <div
                 key={appointment.appointment_id}
                 style={{
@@ -279,12 +284,12 @@ const AppointmentManager: React.FC<AppointmentManagerProps> = ({ onBack }) => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
                   <div>
                     <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#1f2937', marginBottom: '0.5rem' }}>
-                      👤 {appointment.patient.first_name} {appointment.patient.last_name}
+                      👤 {appointment.patient?.first_name || 'Unknown'} {appointment.patient?.last_name || 'Patient'}
                     </h3>
                     <div style={{ display: 'grid', gap: '0.5rem', fontSize: '0.875rem', color: '#6b7280' }}>
                       <div>📅 <strong>Date:</strong> {formatDateTime(appointment.start_time)}</div>
-                      <div>📧 <strong>Email:</strong> {appointment.patient.email_address}</div>
-                      <div>📞 <strong>Phone:</strong> {appointment.patient.phone_number}</div>
+                      <div>📧 <strong>Email:</strong> {appointment.patient?.email_address || 'Not provided'}</div>
+                      <div>📞 <strong>Phone:</strong> {appointment.patient?.phone_number || 'Not provided'}</div>
                       <div>🏥 <strong>Provider Location:</strong> {appointment.provider_location_id}</div>
                     </div>
                   </div>
@@ -415,7 +420,7 @@ const AppointmentManager: React.FC<AppointmentManagerProps> = ({ onBack }) => {
               ❌ Cancel Appointment
             </h3>
             <p style={{ color: '#6b7280', marginBottom: '1.5rem' }}>
-              Are you sure you want to cancel the appointment for {selectedAppointment.patient.first_name} {selectedAppointment.patient.last_name} on {formatDateTime(selectedAppointment.start_time)}?
+              Are you sure you want to cancel the appointment for {selectedAppointment.patient?.first_name || 'Unknown'} {selectedAppointment.patient?.last_name || 'Patient'} on {formatDateTime(selectedAppointment.start_time)}?
             </p>
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
               <button
