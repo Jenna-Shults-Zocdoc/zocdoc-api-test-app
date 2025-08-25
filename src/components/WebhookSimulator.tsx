@@ -19,15 +19,24 @@ const WebhookSimulator: React.FC<WebhookSimulatorProps> = ({ onBack }) => {
     setResult(null);
 
     try {
+      console.log('Starting webhook simulation...');
+      console.log('Webhook URL:', webhookUrl);
+      console.log('Webhook Key:', webhookKey);
+      console.log('Update Type:', updateType);
+      
       const webhookRequest: WebhookMockRequest = {
         webhook_url: webhookUrl,
         webhook_key: webhookKey,
         appointment_update_type: updateType
       };
 
+      console.log('Webhook request payload:', webhookRequest);
+      
       const response = await apiService.simulateWebhook(webhookRequest);
+      console.log('Webhook simulation response:', response);
       setResult(response);
     } catch (err) {
+      console.error('Webhook simulation error:', err);
       const errorMessage = err instanceof Error ? err.message : 'Failed to simulate webhook';
       setError(errorMessage);
     } finally {

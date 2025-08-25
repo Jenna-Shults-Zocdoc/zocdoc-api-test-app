@@ -517,6 +517,9 @@ app.post('/api/webhook/mock-request', async (req, res) => {
     }
     const webhookRequest = req.body;
     console.log('Simulating webhook through Zocdoc API...');
+    console.log('Webhook request:', JSON.stringify(webhookRequest, null, 2));
+    console.log('Using access token:', currentAccessToken.substring(0, 20) + '...');
+    
     const response = await axios.post('https://api-developer-sandbox.zocdoc.com/v1/webhook/mock-request', webhookRequest, {
       headers: {
         'Authorization': `Bearer ${currentAccessToken}`,
@@ -528,6 +531,8 @@ app.post('/api/webhook/mock-request', async (req, res) => {
     res.json(response.data);
   } catch (error) {
     console.error('Error simulating webhook:', error.response?.data || error.message);
+    console.error('Error status:', error.response?.status);
+    console.error('Error headers:', error.response?.headers);
     res.status(error.response?.status || 500).json({
       error: 'Failed to simulate webhook',
       details: error.response?.data || error.message
