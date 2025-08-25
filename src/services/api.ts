@@ -728,6 +728,20 @@ class ApiService {
     }
   }
 
+  async getAppointmentById(appointmentId: string): Promise<AppointmentListItem> {
+    try {
+      console.log('Fetching appointment by ID...');
+      const response = await axios.get(`${BACKEND_PROXY_BASE}/appointments/${appointmentId}`, {
+        timeout: 10000
+      });
+      console.log('Successfully fetched appointment by ID');
+      return (response.data as any).data;
+    } catch (error: any) {
+      console.error('Error fetching appointment by ID:', error);
+      throw new Error(`Failed to fetch appointment: ${error.response?.data?.errors?.[0]?.message || error.message}`);
+    }
+  }
+
   async cancelAppointment(cancelRequest: CancelAppointmentRequest): Promise<AppointmentResponse> {
     try {
       console.log('Cancelling appointment...');

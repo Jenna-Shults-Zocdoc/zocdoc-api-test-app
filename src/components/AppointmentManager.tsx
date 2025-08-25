@@ -17,6 +17,8 @@ const AppointmentManager: React.FC<AppointmentManagerProps> = ({ onBack }) => {
 
   useEffect(() => {
     loadAppointments();
+    // Also load the known test appointment from sandbox
+    loadTestAppointment();
   }, [currentPage]);
 
   const loadAppointments = async () => {
@@ -36,6 +38,26 @@ const AppointmentManager: React.FC<AppointmentManagerProps> = ({ onBack }) => {
       }
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadTestAppointment = async () => {
+    try {
+      // Load the known test appointment from sandbox
+      const testAppointmentId = '2b29f79b-6d7f-472a-9603-d0c378bc9531';
+      const testAppointment = await apiService.getAppointmentById(testAppointmentId);
+      
+      // Add it to the appointments list if it's not already there
+      setAppointments(prev => {
+        const exists = prev.some(apt => apt.appointment_id === testAppointment.appointment_id);
+        if (!exists) {
+          return [testAppointment, ...prev];
+        }
+        return prev;
+      });
+    } catch (err) {
+      console.log('Could not load test appointment:', err);
+      // This is okay - the test appointment might not be available
     }
   };
 
@@ -178,23 +200,42 @@ const AppointmentManager: React.FC<AppointmentManagerProps> = ({ onBack }) => {
             <p style={{ color: '#6b7280', marginBottom: '2rem' }}>
               You don't have any appointments yet. Book your first appointment to get started!
             </p>
-            <button
-              onClick={() => setShowBookingForm(true)}
-              style={{
-                padding: '1rem 2rem',
-                background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '0.75rem',
-                cursor: 'pointer',
-                fontSize: '1.125rem',
-                fontWeight: '600',
-                transition: 'all 0.3s ease',
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-              }}
-            >
-              🏥 Book Your First Appointment
-            </button>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button
+                onClick={() => setShowBookingForm(true)}
+                style={{
+                  padding: '1rem 2rem',
+                  background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '0.75rem',
+                  cursor: 'pointer',
+                  fontSize: '1.125rem',
+                  fontWeight: '600',
+                  transition: 'all 0.3s ease',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                }}
+              >
+                🏥 Book Your First Appointment
+              </button>
+              <button
+                onClick={loadTestAppointment}
+                style={{
+                  padding: '1rem 2rem',
+                  background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '0.75rem',
+                  cursor: 'pointer',
+                  fontSize: '1.125rem',
+                  fontWeight: '600',
+                  transition: 'all 0.3s ease',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                }}
+              >
+                🧪 Load Test Appointment
+              </button>
+            </div>
           </div>
         ) : (
           <div style={{ display: 'grid', gap: '1rem' }}>

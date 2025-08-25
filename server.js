@@ -426,6 +426,32 @@ app.get('/api/appointments', async (req, res) => {
   }
 });
 
+// Proxy endpoint for getting a specific appointment by ID
+app.get('/api/appointments/:appointmentId', async (req, res) => {
+  try {
+    if (!currentAccessToken) {
+      return res.status(401).json({ error: 'No access token available. Please authenticate first.' });
+    }
+
+    const { appointmentId } = req.params;
+    console.log(`Fetching appointment ${appointmentId} from Zocdoc API...`);
+    
+    const response = await axios.get(`https://api-developer-sandbox.zocdoc.com/v1/appointments/${appointmentId}`, {
+      headers: { 'Authorization': `Bearer ${currentAccessToken}` },
+      timeout: 10000
+    });
+    
+    console.log(`Successfully fetched appointment ${appointmentId}`);
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error fetching appointment by ID:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      error: 'Failed to fetch appointment',
+      details: error.response?.data || error.message
+    });
+  }
+});
+
 // Proxy endpoint for cancelling appointments
 app.post('/api/appointments/cancel', async (req, res) => {
   try {
