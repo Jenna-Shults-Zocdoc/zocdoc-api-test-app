@@ -1,11 +1,44 @@
 import axios from 'axios';
 
+// Environment configuration
+export type Environment = 'sandbox' | 'production';
+
+export interface EnvironmentConfig {
+  apiBaseUrl: string;
+  authUrl: string;
+  audience: string;
+  name: string;
+}
+
+export const ENVIRONMENT_CONFIGS: Record<Environment, EnvironmentConfig> = {
+  sandbox: {
+    apiBaseUrl: 'https://api-developer-sandbox.zocdoc.com',
+    authUrl: 'https://auth-api-developer-sandbox.zocdoc.com/oauth/token',
+    audience: 'https://api-developer-sandbox.zocdoc.com/',
+    name: 'Sandbox'
+  },
+  production: {
+    apiBaseUrl: 'https://api-developer.zocdoc.com',
+    authUrl: 'https://auth.zocdoc.com/oauth/token',
+    audience: 'https://api-developer.zocdoc.com/',
+    name: 'Production'
+  }
+};
+
 // Using a CORS proxy to bypass CORS restrictions for testing
 const CORS_PROXY = 'https://cors-anywhere.herokuapp.com/';
-const API_BASE_URL = 'https://api-developer-sandbox.zocdoc.com';
-const AUTH_URL = 'https://auth-api-developer-sandbox.zocdoc.com/oauth/token';
 const BACKEND_PROXY_URL = 'http://localhost:3001/api/auth';
 const BACKEND_PROXY_BASE = 'http://localhost:3001/api';
+
+// Default to sandbox environment
+let currentEnvironment: Environment = 'sandbox';
+
+export const getCurrentEnvironment = (): Environment => currentEnvironment;
+export const getEnvironmentConfig = (): EnvironmentConfig => ENVIRONMENT_CONFIGS[currentEnvironment];
+
+export const setEnvironment = (environment: Environment) => {
+  currentEnvironment = environment;
+};
 
 export interface AuthResponse {
   access_token: string;
@@ -266,9 +299,47 @@ export interface AppointmentResponse {
   data: {
     appointment_id: string;
     appointment_status: string;
-    developer_patient_id?: string;
-    visit_type?: string;
+    start_time: string;
+    created_time_utc: string;
+    last_modified_time_utc: string;
+    provider_location_id: string;
+    practice_id: string;
+    visit_reason_id: string;
+    visit_type: string;
+    patient_type: string;
     notes?: string;
+    cancellation_reason?: string;
+    cancellation_reason_type?: string;
+    is_provider_resource: boolean;
+    confirmation_type: string;
+    location_phone_number?: string;
+    location_phone_extension?: string;
+    waiting_room_path?: string;
+    developer_patient_id?: string;
+    patient?: {
+      patient_id: string;
+      developer_patient_id?: string;
+      first_name: string;
+      last_name: string;
+      date_of_birth: string;
+      sex_at_birth: string;
+      phone_number: string;
+      email_address: string;
+      patient_address: {
+        address1: string;
+        city: string;
+        state: string;
+        zip_code: string;
+        address2?: string;
+      };
+      insurance?: {
+        insurance_plan_id?: string;
+        insurance_group_number?: string;
+        insurance_member_id?: string;
+        is_self_pay?: boolean;
+      };
+      gender?: string[];
+    };
   };
 }
 
@@ -300,7 +371,8 @@ export interface AppointmentListItem {
   location_phone_number?: string;
   location_phone_extension?: string;
   waiting_room_path?: string;
-  patient: {
+  developer_patient_id?: string;
+  patient?: {
     patient_id: string;
     developer_patient_id?: string;
     first_name: string;
@@ -367,15 +439,18 @@ class ApiService {
   async authenticate(clientId: string, clientSecret: string): Promise<AuthResponse> {
     try {
       console.log('Making authentication request via backend proxy...');
+      console.log('Environment:', currentEnvironment);
       console.log('Request payload:', {
         clientId: clientId,
-        client_secret: '***hidden***'
+        client_secret: '***hidden***',
+        environment: currentEnvironment
       });
 
       // Use backend proxy to avoid CORS issues
       const response = await axios.post<AuthResponse>(BACKEND_PROXY_URL, {
         clientId: clientId,
-        clientSecret: clientSecret
+        clientSecret: clientSecret,
+        environment: currentEnvironment
       }, {
         headers: {
           'Content-Type': 'application/json'
@@ -751,16 +826,37 @@ class ApiService {
     }
   }
 
-  async getAppointmentById(appointmentId: string): Promise<AppointmentListItem> {
+  async getAppointmentById(appointmentId: string): Promise<AppointmentResponse> {
     try {
-      console.log('Fetching appointment by ID...');
-      const response = await axios.get(`${BACKEND_PROXY_BASE}/appointments/${appointmentId}`, {
+      if (!this.accessToken) {
+        throw new Error('Not authenticated. Please authenticate first.');
+      }
+
+      console.log(`Fetching appointment ${appointmentId} from Zocdoc API...`);
+
+      const response = await axios.get<AppointmentResponse>(`${ENVIRONMENT_CONFIGS[currentEnvironment].apiBaseUrl}/v1/appointments/${appointmentId}`, {
+        headers: {
+          'Authorization': `Bearer ${this.accessToken}`
+        },
         timeout: 10000
       });
-      console.log('Successfully fetched appointment by ID');
-      return (response.data as any).data;
+
+      console.log(`Successfully fetched appointment by ID`);
+      console.log(`Full API response for appointment ${appointmentId}:`, response.data);
+      console.log(`Response data keys:`, Object.keys(response.data));
+      console.log(`Response data.data keys:`, response.data.data ? Object.keys(response.data.data) : 'No data object');
+      
+      if (response.data.data) {
+        console.log(`Patient object exists:`, !!response.data.data.patient);
+        console.log(`Patient object:`, response.data.data.patient);
+        if (response.data.data.patient) {
+          console.log(`Patient object keys:`, Object.keys(response.data.data.patient));
+        }
+      }
+
+      return response.data as AppointmentResponse;
     } catch (error: any) {
-      console.error('Error fetching appointment by ID:', error);
+      console.error(`Error fetching appointment by ID:`, error.response?.data || error.message);
       throw new Error(`Failed to fetch appointment: ${error.response?.data?.errors?.[0]?.message || error.message}`);
     }
   }
@@ -813,13 +909,13 @@ class ApiService {
   // Legacy methods for direct API calls (kept for reference)
   async authenticateDirect(clientId: string, clientSecret: string): Promise<AuthResponse> {
     try {
-      console.log('Making authentication request to:', AUTH_URL);
+      console.log('Making authentication request to:', ENVIRONMENT_CONFIGS[currentEnvironment].authUrl);
       console.log('Request payload:', {
         grant_type: 'client_credentials',
         client_id: clientId,
         client_secret: '***hidden***',
         scope: 'external.appointment.read external.appointment.write',
-        audience: 'https://api-developer-sandbox.zocdoc.com/'
+        audience: ENVIRONMENT_CONFIGS[currentEnvironment].audience
       });
 
       // Try direct request first, then fallback to CORS proxy
@@ -830,10 +926,10 @@ class ApiService {
         console.log('Attempting direct API call...');
         // Method 1: Try with Basic Auth header (like Postman)
         const basicAuth = btoa(`${clientId}:${clientSecret}`);
-        response = await axios.post<AuthResponse>(AUTH_URL, {
+        response = await axios.post<AuthResponse>(ENVIRONMENT_CONFIGS[currentEnvironment].authUrl, {
           grant_type: 'client_credentials',
           scope: 'external.appointment.read external.appointment.write',
-          audience: 'https://api-developer-sandbox.zocdoc.com/'
+          audience: ENVIRONMENT_CONFIGS[currentEnvironment].audience
         }, {
           headers: {
             'Content-Type': 'application/json',
@@ -848,12 +944,12 @@ class ApiService {
         try {
           console.log('Trying with client_id/client_secret in body...');
           // Method 2: Try with client_id/client_secret in body
-          response = await axios.post<AuthResponse>(AUTH_URL, {
+          response = await axios.post<AuthResponse>(ENVIRONMENT_CONFIGS[currentEnvironment].authUrl, {
             grant_type: 'client_credentials',
             client_id: clientId,
             client_secret: clientSecret,
             scope: 'external.appointment.read external.appointment.write',
-            audience: 'https://api-developer-sandbox.zocdoc.com/'
+            audience: ENVIRONMENT_CONFIGS[currentEnvironment].audience
           }, {
             headers: {
               'Content-Type': 'application/json'
@@ -868,10 +964,10 @@ class ApiService {
 
           // Method 3: Fallback to CORS proxy with Basic Auth
           const basicAuth = btoa(`${clientId}:${clientSecret}`);
-          response = await axios.post<AuthResponse>(`${CORS_PROXY}${AUTH_URL}`, {
+          response = await axios.post<AuthResponse>(`${CORS_PROXY}${ENVIRONMENT_CONFIGS[currentEnvironment].authUrl}`, {
             grant_type: 'client_credentials',
             scope: 'external.appointment.read external.appointment.write',
-            audience: 'https://api-developer-sandbox.zocdoc.com/'
+            audience: ENVIRONMENT_CONFIGS[currentEnvironment].audience
           }, {
             headers: {
               'Content-Type': 'application/json',
@@ -956,7 +1052,7 @@ class ApiService {
     }
 
     try {
-      const response = await axios.get(`${API_BASE_URL}/v1/providers`, {
+      const response = await axios.get(`${ENVIRONMENT_CONFIGS[currentEnvironment].apiBaseUrl}/v1/providers`, {
         headers: {
           'Authorization': `Bearer ${this.accessToken}`
         },
@@ -985,7 +1081,7 @@ class ApiService {
         params.specialty_id = specialtyId;
       }
 
-      const response = await axios.get(`${API_BASE_URL}/v1/provider_locations`, {
+      const response = await axios.get(`${ENVIRONMENT_CONFIGS[currentEnvironment].apiBaseUrl}/v1/provider_locations`, {
         headers: {
           'Authorization': `Bearer ${this.accessToken}`
         },

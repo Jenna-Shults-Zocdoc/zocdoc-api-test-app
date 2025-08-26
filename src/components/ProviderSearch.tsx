@@ -10,9 +10,10 @@ interface BookingModalProps {
   onClose: () => void;
   provider: AvailabilityAwareProvider;
   selectedSlot: Timeslot;
+  onBookingSuccess: (bookedSlot: Timeslot) => void;
 }
 
-const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, provider, selectedSlot }) => {
+const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, provider, selectedSlot, onBookingSuccess }) => {
   const [bookingStep, setBookingStep] = useState<'details' | 'confirmation'>('details');
   const [patientInfo, setPatientInfo] = useState({
     firstName: '',
@@ -25,15 +26,62 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, provider, 
     insuranceGroupNumber: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [bookingError, setBookingError] = useState('');
 
   if (!isOpen) return null;
 
   const handleBookingSubmit = async () => {
     setIsSubmitting(true);
-    // Simulate booking process
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setBookingStep('confirmation');
-    setIsSubmitting(false);
+    setBookingError('');
+
+    try {
+      // Create the booking request
+      const bookingRequest = {
+        appointment_type: 'providers' as const,
+        data: {
+          start_time: selectedSlot.start_time,
+          visit_reason_id: selectedSlot.visit_reason_id || 'pc_FRO-18leckytNKtruw5dLR', // Default consultation
+          provider_location_id: provider.providerLocation.provider_location_id,
+          patient: {
+            first_name: patientInfo.firstName,
+            last_name: patientInfo.lastName,
+            date_of_birth: patientInfo.dateOfBirth,
+            sex_at_birth: 'female' as const, // You might want to make this configurable
+            phone_number: patientInfo.phone.replace(/\D/g, ''), // Remove non-digits
+            email_address: patientInfo.email,
+            patient_address: {
+              address1: '123 Main St', // You might want to make this configurable
+              city: 'New York',
+              state: 'NY',
+              zip_code: '10001'
+            },
+            insurance: patientInfo.insurancePlanId ? {
+              insurance_plan_id: patientInfo.insurancePlanId,
+              insurance_member_id: patientInfo.insuranceMemberId || undefined,
+              insurance_group_number: patientInfo.insuranceGroupNumber || undefined
+            } : undefined
+          },
+          patient_type: 'new' as const
+        }
+      };
+
+      console.log('Submitting booking request:', bookingRequest);
+
+      // Make the actual booking API call
+      const bookingResponse = await apiService.bookAppointment(bookingRequest);
+      
+      console.log('Booking successful:', bookingResponse);
+      
+      // Call the success callback to remove the slot from availability
+      onBookingSuccess(selectedSlot);
+      
+      setBookingStep('confirmation');
+    } catch (error) {
+      console.error('Booking failed:', error);
+      setBookingError(error instanceof Error ? error.message : 'Booking failed. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const formatDateTime = (dateTimeString: string) => {
@@ -113,6 +161,19 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, provider, 
 
         {/* Content */}
         <div style={{ padding: '1.5rem' }}>
+          {bookingError && (
+            <div style={{
+              padding: '1rem',
+              background: 'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)',
+              border: '1px solid #f87171',
+              color: '#b91c1c',
+              borderRadius: '0.75rem',
+              marginBottom: '1rem',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+            }}>
+              ⚠️ {bookingError}
+            </div>
+          )}
           {bookingStep === 'details' ? (
             <div>
               {/* Appointment Summary */}
@@ -494,6 +555,24 @@ const ProviderSearch: React.FC<ProviderSearchProps> = ({ onBack }) => {
       provider: null,
       selectedSlot: null
     });
+  };
+
+  const handleBookingSuccess = (bookedSlot: Timeslot) => {
+    setSearchResults(prev => prev.map(result => {
+      if (result.providerLocation.provider_location_id === bookingModal.provider?.providerLocation.provider_location_id) {
+        if (result.availability) {
+          return {
+            ...result,
+            availability: {
+              ...result.availability,
+              timeslots: result.availability.timeslots.filter(slot => slot.start_time !== bookedSlot.start_time)
+            }
+          };
+        }
+      }
+      return result;
+    }));
+    closeBookingModal();
   };
 
   const formatDateTime = (dateTimeString: string) => {
@@ -1120,6 +1199,16 @@ const ProviderSearch: React.FC<ProviderSearchProps> = ({ onBack }) => {
                           <div>
                             <h5 style={{ fontSize: '1rem', fontWeight: '600', color: '#374151', marginBottom: '0.5rem' }}>
                               Available Appointments ({result.availability?.timeslots.length || 0})
+                              {result.availability?.timeslots.length === 0 && (
+                                <span style={{ 
+                                  fontSize: '0.875rem', 
+                                  fontWeight: '400', 
+                                  color: '#6b7280',
+                                  marginLeft: '0.5rem'
+                                }}>
+                                  (All slots booked)
+                                </span>
+                              )}
                             </h5>
                             {result.availability && result.availability.timeslots.length > 0 && (
                               <div style={{
@@ -1143,7 +1232,7 @@ const ProviderSearch: React.FC<ProviderSearchProps> = ({ onBack }) => {
                                       cursor: 'pointer',
                                       color: '#1e40af',
                                       fontWeight: '500',
-                                                                             transition: 'all 0.2s ease'
+                                      transition: 'all 0.2s ease'
                                     }}
                                     onMouseEnter={(e) => {
                                       e.currentTarget.style.backgroundColor = '#0ea5e9';
@@ -1170,6 +1259,19 @@ const ProviderSearch: React.FC<ProviderSearchProps> = ({ onBack }) => {
                                     +{result.availability.timeslots.length - 10} more
                                   </div>
                                 )}
+                              </div>
+                            )}
+                            {result.availability && result.availability.timeslots.length === 0 && (
+                              <div style={{
+                                padding: '1rem',
+                                backgroundColor: '#fef3c7',
+                                border: '1px solid #f59e0b',
+                                borderRadius: '0.375rem',
+                                textAlign: 'center',
+                                fontSize: '0.875rem',
+                                color: '#92400e'
+                              }}>
+                                🎉 All available slots have been booked! Check back later for new availability.
                               </div>
                             )}
                           </div>
@@ -1203,6 +1305,7 @@ const ProviderSearch: React.FC<ProviderSearchProps> = ({ onBack }) => {
           onClose={closeBookingModal}
           provider={bookingModal.provider}
           selectedSlot={bookingModal.selectedSlot}
+          onBookingSuccess={handleBookingSuccess}
         />
       )}
     </div>

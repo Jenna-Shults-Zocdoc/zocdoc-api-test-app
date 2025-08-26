@@ -4,6 +4,25 @@ const axios = require('axios');
 
 const app = express();
 
+// Environment configuration
+const ENVIRONMENT_CONFIGS = {
+  sandbox: {
+    apiBaseUrl: 'https://api-developer-sandbox.zocdoc.com',
+    authUrl: 'https://auth-api-developer-sandbox.zocdoc.com/oauth/token',
+    audience: 'https://api-developer-sandbox.zocdoc.com/',
+    name: 'Sandbox'
+  },
+  production: {
+    apiBaseUrl: 'https://api-developer.zocdoc.com',
+    authUrl: 'https://auth.zocdoc.com/oauth/token',
+    audience: 'https://api-developer.zocdoc.com/',
+    name: 'Production'
+  }
+};
+
+// Default to sandbox environment
+let currentEnvironment = 'sandbox';
+
 // Enable CORS for React app
 app.use(cors({
   origin: 'http://localhost:3000',
@@ -19,7 +38,7 @@ let currentAccessToken = null;
 // Proxy endpoint for Zocdoc authentication
 app.post('/api/auth', async (req, res) => {
   try {
-    const { clientId, clientSecret } = req.body;
+    const { clientId, clientSecret, environment = 'sandbox' } = req.body;
     
     if (!clientId || !clientSecret) {
       return res.status(400).json({
@@ -27,15 +46,23 @@ app.post('/api/auth', async (req, res) => {
       });
     }
 
-    console.log('Proxying authentication request to Zocdoc API...');
+    // Update current environment
+    currentEnvironment = environment;
+    const config = ENVIRONMENT_CONFIGS[currentEnvironment];
+    
+    console.log(`Proxying authentication request to Zocdoc API (${config.name})...`);
+    console.log('Environment config:', {
+      authUrl: config.authUrl,
+      audience: config.audience
+    });
     
     // Make request to Zocdoc API
-    const response = await axios.post('https://auth-api-developer-sandbox.zocdoc.com/oauth/token', {
+    const response = await axios.post(config.authUrl, {
       grant_type: 'client_credentials',
       client_id: clientId,
       client_secret: clientSecret,
-              scope: 'external.appointment.read external.appointment.write',
-      audience: 'https://api-developer-sandbox.zocdoc.com/'
+      scope: 'external.appointment.read external.appointment.write',
+      audience: config.audience
     }, {
       headers: {
         'Content-Type': 'application/json'
@@ -86,7 +113,7 @@ app.get('/api/providers/npis', async (req, res) => {
     
     console.log('Fetching NPIs from Zocdoc API...');
     
-    const response = await axios.get('https://api-developer-sandbox.zocdoc.com/v1/reference/npi', {
+    const response = await axios.get(`${ENVIRONMENT_CONFIGS[currentEnvironment].apiBaseUrl}/v1/reference/npi`, {
       headers: {
         'Authorization': `Bearer ${currentAccessToken}`
       },
@@ -142,7 +169,7 @@ app.get('/api/providers', async (req, res) => {
       params.insurance_plan_id = insurance_plan_id;
     }
     
-    const response = await axios.get('https://api-developer-sandbox.zocdoc.com/v1/providers', {
+    const response = await axios.get(`${ENVIRONMENT_CONFIGS[currentEnvironment].apiBaseUrl}/v1/providers`, {
       headers: {
         'Authorization': `Bearer ${currentAccessToken}`
       },
@@ -211,7 +238,7 @@ app.get('/api/provider_locations', async (req, res) => {
     if (visit_type) params.visit_type = visit_type;
     if (max_distance_to_patient_mi) params.max_distance_to_patient_mi = max_distance_to_patient_mi;
     
-    const response = await axios.get('https://api-developer-sandbox.zocdoc.com/v1/provider_locations', {
+    const response = await axios.get(`${ENVIRONMENT_CONFIGS[currentEnvironment].apiBaseUrl}/v1/provider_locations`, {
       headers: {
         'Authorization': `Bearer ${currentAccessToken}`
       },
@@ -279,7 +306,7 @@ app.get('/api/availability', async (req, res) => {
       params.end_date_in_provider_local_time = end_date_in_provider_local_time;
     }
     
-    const response = await axios.get('https://api-developer-sandbox.zocdoc.com/v1/provider_locations/availability', {
+    const response = await axios.get(`${ENVIRONMENT_CONFIGS[currentEnvironment].apiBaseUrl}/v1/provider_locations/availability`, {
       headers: {
         'Authorization': `Bearer ${currentAccessToken}`
       },
@@ -340,7 +367,7 @@ app.get('/api/insurance_plans', async (req, res) => {
     if (program_type) params.program_type = program_type;
     if (care_category) params.care_category = care_category;
     
-    const response = await axios.get('https://api-developer-sandbox.zocdoc.com/v1/insurance_plans', {
+    const response = await axios.get(`${ENVIRONMENT_CONFIGS[currentEnvironment].apiBaseUrl}/v1/insurance_plans`, {
       headers: {
         'Authorization': `Bearer ${currentAccessToken}`
       },
@@ -379,7 +406,7 @@ app.post('/api/appointments', async (req, res) => {
     const bookingRequest = req.body;
     console.log('Booking appointment through Zocdoc API...');
     
-    const response = await axios.post('https://api-developer-sandbox.zocdoc.com/v1/appointments', bookingRequest, {
+    const response = await axios.post(`${ENVIRONMENT_CONFIGS[currentEnvironment].apiBaseUrl}/v1/appointments`, bookingRequest, {
       headers: { 
         'Authorization': `Bearer ${currentAccessToken}`,
         'Content-Type': 'application/json'
@@ -408,7 +435,7 @@ app.get('/api/appointments', async (req, res) => {
     const { page = 0, page_size = 10 } = req.query;
     console.log('Fetching appointments from Zocdoc API...');
     
-    const response = await axios.get('https://api-developer-sandbox.zocdoc.com/v1/appointments', {
+    const response = await axios.get(`${ENVIRONMENT_CONFIGS[currentEnvironment].apiBaseUrl}/v1/appointments`, {
       headers: { 'Authorization': `Bearer ${currentAccessToken}` },
       params: { page, page_size },
       timeout: 10000
@@ -435,7 +462,7 @@ app.get('/api/appointments/:appointmentId', async (req, res) => {
     const { appointmentId } = req.params;
     console.log(`Fetching appointment ${appointmentId} from Zocdoc API...`);
     
-    const response = await axios.get(`https://api-developer-sandbox.zocdoc.com/v1/appointments/${appointmentId}`, {
+    const response = await axios.get(`${ENVIRONMENT_CONFIGS[currentEnvironment].apiBaseUrl}/v1/appointments/${appointmentId}`, {
       headers: { 'Authorization': `Bearer ${currentAccessToken}` },
       timeout: 10000
     });
@@ -461,7 +488,7 @@ app.post('/api/appointments/cancel', async (req, res) => {
     const cancelRequest = req.body;
     console.log('Cancelling appointment through Zocdoc API...');
     
-    const response = await axios.post('https://api-developer-sandbox.zocdoc.com/v1/appointments/cancel', cancelRequest, {
+    const response = await axios.post(`${ENVIRONMENT_CONFIGS[currentEnvironment].apiBaseUrl}/v1/appointments/cancel`, cancelRequest, {
       headers: { 
         'Authorization': `Bearer ${currentAccessToken}`,
         'Content-Type': 'application/json'
@@ -490,7 +517,7 @@ app.post('/api/appointments/reschedule', async (req, res) => {
     const rescheduleRequest = req.body;
     console.log('Rescheduling appointment through Zocdoc API...');
     
-    const response = await axios.post('https://api-developer-sandbox.zocdoc.com/v1/appointments/reschedule', rescheduleRequest, {
+    const response = await axios.post(`${ENVIRONMENT_CONFIGS[currentEnvironment].apiBaseUrl}/v1/appointments/reschedule`, rescheduleRequest, {
       headers: { 
         'Authorization': `Bearer ${currentAccessToken}`,
         'Content-Type': 'application/json'
@@ -520,7 +547,7 @@ app.post('/api/webhook/mock-request', async (req, res) => {
     console.log('Webhook request:', JSON.stringify(webhookRequest, null, 2));
     console.log('Using access token:', currentAccessToken.substring(0, 20) + '...');
     
-    const response = await axios.post('https://api-developer-sandbox.zocdoc.com/v1/webhook/mock-request', webhookRequest, {
+    const response = await axios.post(`${ENVIRONMENT_CONFIGS[currentEnvironment].apiBaseUrl}/v1/webhook/mock-request`, webhookRequest, {
       headers: {
         'Authorization': `Bearer ${currentAccessToken}`,
         'Content-Type': 'application/json'

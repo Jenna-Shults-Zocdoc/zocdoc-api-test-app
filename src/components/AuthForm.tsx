@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { apiService, AuthResponse } from '../services/api';
+import { apiService, AuthResponse, Environment } from '../services/api';
+import EnvironmentToggle from './EnvironmentToggle';
 
 interface AuthFormProps {
   onAuthSuccess: (response: AuthResponse) => void;
@@ -16,6 +17,11 @@ const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess, storedCredentials })
   const [useBackendProxy, setUseBackendProxy] = useState(storedCredentials?.useBackendProxy ?? true);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const handleEnvironmentChange = (environment: Environment) => {
+    // Clear any existing error when switching environments
+    setError('');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,7 +60,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess, storedCredentials })
       access_token: 'mock_token_12345',
       token_type: 'Bearer',
       expires_in: 3600,
-              scope: 'external.appointment.read external.appointment.write'
+      scope: 'external.appointment.read external.appointment.write'
     };
     onAuthSuccess(mockResponse);
   };
@@ -78,6 +84,8 @@ const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess, storedCredentials })
       }}>
         🔐 Zocdoc API Authentication
       </h2>
+
+      <EnvironmentToggle onEnvironmentChange={handleEnvironmentChange} />
 
       {error && (
         <div style={{

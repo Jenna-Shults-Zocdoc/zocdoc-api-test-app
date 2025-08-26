@@ -9,7 +9,7 @@ import WebhookSimulator from './components/WebhookSimulator';
 import TokenExpirationModal from './components/TokenExpirationModal';
 import DebugInfo from './components/DebugInfo';
 import PostmanComparison from './components/PostmanComparison';
-import { AuthResponse, apiService, setTokenExpiredCallback } from './services/api';
+import { AuthResponse, apiService, setTokenExpiredCallback, getCurrentEnvironment, ENVIRONMENT_CONFIGS } from './services/api';
 
 type AppView = 'auth' | 'success' | 'providers' | 'search' | 'appointments' | 'webhook-simulator';
 
@@ -173,6 +173,21 @@ function App() {
                 }}>
                   🏥 Zocdoc API Test App
                 </h1>
+                <span style={{
+                  marginLeft: '1rem',
+                  padding: '0.25rem 0.75rem',
+                  backgroundColor: getCurrentEnvironment() === 'sandbox' 
+                    ? 'rgba(255, 193, 7, 0.2)' 
+                    : 'rgba(220, 53, 69, 0.2)',
+                  color: getCurrentEnvironment() === 'sandbox' ? '#ffc107' : '#dc3545',
+                  borderRadius: '9999px',
+                  fontSize: '0.75rem',
+                  fontWeight: '600',
+                  backdropFilter: 'blur(10px)',
+                  border: `1px solid ${getCurrentEnvironment() === 'sandbox' ? 'rgba(255, 193, 7, 0.3)' : 'rgba(220, 53, 69, 0.3)'}`
+                }}>
+                  {getCurrentEnvironment() === 'sandbox' ? '🧪' : '🚀'} {ENVIRONMENT_CONFIGS[getCurrentEnvironment()].name}
+                </span>
                 {currentView === 'providers' && (
                   <span style={{
                     marginLeft: '1rem',
